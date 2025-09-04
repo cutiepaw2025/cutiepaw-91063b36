@@ -1,10 +1,1 @@
 project_id = "kugoonmszogwjxwulhtj"
-
-[storage]
-enabled = true
-
-[[storage.buckets]]
-name = "branding_assets"
-public = true
-allowed_mime_types = ["image/*"]
-file_size_limit = "5MB"

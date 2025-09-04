@@ -79,14 +79,14 @@ const Index = () => {
       <div className="bg-gradient-to-r from-primary/10 via-accent/20 to-secondary/10 rounded-2xl p-6 border border-border/50">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">
+            <h1 className="text-4xl font-bold text-foreground mb-1">
               Welcome to {companySettings?.company_name || "Cutiepaw"} Dashboard
             </h1>
             <p className="text-lg text-muted-foreground">
               Your comprehensive pet apparel & accessories management system
             </p>
           </div>
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-2">
             {settingsLoading ? (
               <Skeleton className="w-20 h-20 rounded-2xl" />
             ) : companySettings?.company_logo_url ? (

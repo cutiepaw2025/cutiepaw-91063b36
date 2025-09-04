@@ -154,61 +154,62 @@ export type Database = {
           }
         ]
       }
-      fabric_master: {
+      fabrics: {
         Row: {
           id: string
+          fabric_code: string
           fabric_name: string
           fabric_type: string | null
-          gsm: number | null
-          uom: string | null
-          price: number | null
-          supplier: string | null
-          main_image_url: string | null
+          image_url: string | null
           created_at: string | null
           updated_at: string | null
         }
         Insert: {
-          id: string
+          id?: string
+          fabric_code: string
           fabric_name: string
           fabric_type?: string | null
-          gsm?: number | null
-          uom?: string | null
-          price?: number | null
-          supplier?: string | null
-          main_image_url?: string | null
+          image_url?: string | null
           created_at?: string | null
           updated_at?: string | null
         }
         Update: {
           id?: string
+          fabric_code?: string
           fabric_name?: string
           fabric_type?: string | null
-          gsm?: number | null
-          uom?: string | null
-          price?: number | null
-          supplier?: string | null
-          main_image_url?: string | null
+          image_url?: string | null
           created_at?: string | null
           updated_at?: string | null
         }
         Relationships: []
       }
-      fabric_colors: {
+      fabric_variants: {
         Row: {
           id: string
           fabric_id: string
+          variant_code: string
+          color: string
+          gsm: number
+          uom: string | null
+          price: number | null
+          supplier: string | null
           description: string | null
-          color: string | null
           hex_code: string | null
           image_url: string | null
           created_at: string | null
           updated_at: string | null
         }
         Insert: {
-          id: string
+          id?: string
           fabric_id: string
+          variant_code: string
+          color: string
+          gsm: number
+          uom?: string | null
+          price?: number | null
+          supplier?: string | null
           description?: string | null
-          color?: string | null
           hex_code?: string | null
           image_url?: string | null
           created_at?: string | null
@@ -217,8 +218,13 @@ export type Database = {
         Update: {
           id?: string
           fabric_id?: string
+          variant_code?: string
+          color?: string
+          gsm?: number
+          uom?: string | null
+          price?: number | null
+          supplier?: string | null
           description?: string | null
-          color?: string | null
           hex_code?: string | null
           image_url?: string | null
           created_at?: string | null
@@ -226,10 +232,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fabric_colors_fabric_id_fkey"
+            foreignKeyName: "fabric_variants_fabric_id_fkey"
             columns: ["fabric_id"]
             isOneToOne: false
-            referencedRelation: "fabric_master"
+            referencedRelation: "fabrics"
             referencedColumns: ["id"]
           }
         ]
@@ -958,6 +964,205 @@ export type Database = {
           },
         ]
       }
+      pet_breeds: {
+        Row: {
+          id: string
+          breed_name: string
+          description: string | null
+          image_url: string | null
+          pet_type: 'dog' | 'cat'
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          breed_name: string
+          description?: string | null
+          image_url?: string | null
+          pet_type: 'dog' | 'cat'
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          breed_name?: string
+          description?: string | null
+          image_url?: string | null
+          pet_type?: 'dog' | 'cat'
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      size_types: {
+        Row: {
+          id: string
+          size_type_name: string
+          pet_type: 'dog' | 'cat'
+          description: string | null
+          ideal_for_breed_ids: string[] | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          size_type_name: string
+          pet_type: 'dog' | 'cat'
+          description?: string | null
+          ideal_for_breed_ids?: string[] | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          size_type_name?: string
+          pet_type?: 'dog' | 'cat'
+          description?: string | null
+          ideal_for_breed_ids?: string[] | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      size_charts: {
+        Row: {
+          id: string
+          size_type_id: string
+          size: string
+          neck: number | null
+          chest: number | null
+          length: number | null
+          front_leg_length: number | null
+          back_leg_length: number | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          size_type_id: string
+          size: string
+          neck?: number | null
+          chest?: number | null
+          length?: number | null
+          front_leg_length?: number | null
+          back_leg_length?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          size_type_id?: string
+          size?: string
+          neck?: number | null
+          chest?: number | null
+          length?: number | null
+          front_leg_length?: number | null
+          back_leg_length?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "size_charts_size_type_id_fkey"
+            columns: ["size_type_id"]
+            isOneToOne: false
+            referencedRelation: "size_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      franchise_requests: {
+        Row: {
+          id: string
+          google_form_id: string | null
+          google_sheet_row_id: string | null
+          business_name: string | null
+          owner_name: string
+          email: string
+          phone: string
+          address: string | null
+          city: string | null
+          state: string | null
+          pincode: string | null
+          investment_amount: number | null
+          investment_amount_text: string | null
+          preferred_territory: string | null
+          business_experience: string | null
+          current_business: string | null
+          why_franchise: string | null
+          expected_timeline: string | null
+          additional_notes: string | null
+          status: 'new' | 'reviewing' | 'approved' | 'rejected' | 'contacted'
+          assigned_to: string | null
+          priority: 'low' | 'medium' | 'high' | 'urgent'
+          source: string
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          google_form_id?: string | null
+          google_sheet_row_id?: string | null
+          business_name?: string | null
+          owner_name: string
+          email: string
+          phone: string
+          address?: string | null
+          city?: string | null
+          state?: string | null
+          pincode?: string | null
+          investment_amount?: number | null
+          investment_amount_text?: string | null
+          preferred_territory?: string | null
+          business_experience?: string | null
+          current_business?: string | null
+          why_franchise?: string | null
+          expected_timeline?: string | null
+          additional_notes?: string | null
+          status?: 'new' | 'reviewing' | 'approved' | 'rejected' | 'contacted'
+          assigned_to?: string | null
+          priority?: 'low' | 'medium' | 'high' | 'urgent'
+          source?: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          google_form_id?: string | null
+          google_sheet_row_id?: string | null
+          business_name?: string | null
+          owner_name?: string
+          email?: string
+          phone?: string
+          address?: string | null
+          city?: string | null
+          state?: string | null
+          pincode?: string | null
+          investment_amount?: number | null
+          investment_amount_text?: string | null
+          preferred_territory?: string | null
+          business_experience?: string | null
+          current_business?: string | null
+          why_franchise?: string | null
+          expected_timeline?: string | null
+          additional_notes?: string | null
+          status?: 'new' | 'reviewing' | 'approved' | 'rejected' | 'contacted'
+          assigned_to?: string | null
+          priority?: 'low' | 'medium' | 'high' | 'urgent'
+          source?: string
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "franchise_requests_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1116,3 +1321,70 @@ export const Constants = {
     },
   },
 } as const
+
+// Custom types for Size Master
+export interface PetBreed {
+  id: string;
+  breed_name: string;
+  description: string | null;
+  image_url: string | null;
+  pet_type: 'dog' | 'cat';
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface SizeType {
+  id: string;
+  size_type_name: string;
+  pet_type: 'dog' | 'cat';
+  description: string | null;
+  ideal_for_breed_ids: string[] | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface SizeChart {
+  id: string;
+  size_type_id: string;
+  size: string;
+  neck: number | null;
+  chest: number | null;
+  length: number | null;
+  front_leg_length: number | null;
+  back_leg_length: number | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface SizeTypeWithCharts extends SizeType {
+  size_charts: SizeChart[];
+}
+
+// Custom types for Franchise Requests
+export interface FranchiseRequest {
+  id: string;
+  google_form_id: string | null;
+  google_sheet_row_id: string | null;
+  business_name: string | null;
+  owner_name: string;
+  email: string;
+  phone: string;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  pincode: string | null;
+  investment_amount: number | null;
+  investment_amount_text: string | null;
+  preferred_territory: string | null;
+  business_experience: string | null;
+  current_business: string | null;
+  why_franchise: string | null;
+  expected_timeline: string | null;
+  additional_notes: string | null;
+  status: 'new' | 'reviewing' | 'approved' | 'rejected' | 'contacted';
+  assigned_to: string | null;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  source: string;
+  created_at: string | null;
+  updated_at: string | null;
+}

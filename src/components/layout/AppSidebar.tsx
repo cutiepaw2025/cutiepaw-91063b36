@@ -48,6 +48,7 @@ const navigationItems = [
       { title: "Invoices", url: "/crm/invoices", icon: FileSpreadsheet },
       { title: "Customers", url: "/crm/customers", icon: UsersIcon },
       { title: "Franchise", url: "/crm/franchise", icon: HeartHandshake },
+      { title: "Franchise Requests", url: "/crm/franchise-requests", icon: Building },
       { title: "Support", url: "/crm/support", icon: MessageSquare },
     ],
   },
@@ -159,7 +160,7 @@ export function AppSidebar() {
       <SidebarContent className="bg-sidebar-background">
         {/* Logo Section */}
         <div className="p-4 border-b border-sidebar-border">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {settingsLoading ? (
               <Skeleton className="w-8 h-8 rounded-lg" />
             ) : companySettings?.sidebar_logo_url ? (
@@ -175,7 +176,7 @@ export function AppSidebar() {
               </div>
             )}
             {!collapsed && (
-              <span className="font-bold text-lg text-sidebar-foreground">
+              <span className="font-bold text-xl text-sidebar-foreground">
                 {companySettings?.company_name || "Cutiepaw"}
               </span>
             )}

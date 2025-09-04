@@ -10,6 +10,8 @@ import NotFound from "./pages/NotFound";
 import CompanySetup from "./pages/settings/CompanySetup";
 import ProductCategoryMaster from "./pages/masters/ProductCategoryMaster";
 import FabricMaster from "./pages/masters/FabricMaster";
+import SizeMaster from "./pages/masters/SizeMaster";
+import FranchiseRequests from "./pages/crm/FranchiseRequests";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +28,8 @@ const App = () => (
             <Route path="settings/company" element={<CompanySetup />} />
             <Route path="masters/categories" element={<ProductCategoryMaster />} />
             <Route path="masters/fabrics" element={<FabricMaster />} />
+            <Route path="masters/sizes" element={<SizeMaster />} />
+            <Route path="crm/franchise-requests" element={<FranchiseRequests />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           </Route>
           <Route path="*" element={<NotFound />} />
