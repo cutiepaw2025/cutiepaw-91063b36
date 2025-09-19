@@ -1,0 +1,114 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Cutiepaw Custom Color Palette */
+    --background: 42 29% 95%; /* #f8f4eb - Light cream */
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 42 29% 95%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 42 29% 95%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 324 61% 59%; /* #df519d - Pink/magenta highlight */
+    --primary-foreground: 42 29% 95%;
+
+    --secondary: 186 47% 80%; /* #b7e3ea - Light teal accent */
+    --secondary-foreground: 222.2 84% 4.9%;
+
+    --muted: 186 47% 85%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 186 47% 80%; /* #b7e3ea - Light teal accent */
+    --accent-foreground: 222.2 84% 4.9%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 42 29% 95%;
+
+    --border: 186 47% 75%;
+    --input: 186 47% 85%;
+    --ring: 324 61% 59%;
+
+    --radius: 0.75rem;
+
+    /* Sidebar colors using brand palette */
+    --sidebar-background: 42 29% 92%;
+    --sidebar-foreground: 222.2 84% 4.9%;
+    --sidebar-primary: 324 61% 59%;
+    --sidebar-primary-foreground: 42 29% 95%;
+    --sidebar-accent: 186 47% 85%;
+    --sidebar-accent-foreground: 222.2 84% 4.9%;
+    --sidebar-border: 186 47% 75%;
+    --sidebar-ring: 324 61% 59%;
+
+    /* Custom gradients and effects */
+    --gradient-primary: linear-gradient(135deg, hsl(324 61% 59%), hsl(324 61% 65%));
+    --gradient-accent: linear-gradient(135deg, hsl(186 47% 80%), hsl(186 47% 85%));
+    --shadow-soft: 0 4px 20px -2px hsl(324 61% 59% / 0.1);
+    --shadow-medium: 0 8px 30px -4px hsl(324 61% 59% / 0.15);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    /* Dark mode with brand colors */
+    --background: 222.2 84% 8%;
+    --foreground: 42 29% 95%;
+
+    --card: 222.2 84% 10%;
+    --card-foreground: 42 29% 95%;
+
+    --popover: 222.2 84% 10%;
+    --popover-foreground: 42 29% 95%;
+
+    --primary: 324 61% 65%;
+    --primary-foreground: 222.2 84% 8%;
+
+    --secondary: 186 47% 25%;
+    --secondary-foreground: 42 29% 95%;
+
+    --muted: 186 47% 20%;
+    --muted-foreground: 186 47% 65%;
+
+    --accent: 186 47% 25%;
+    --accent-foreground: 42 29% 95%;
+
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 42 29% 95%;
+
+    --border: 186 47% 20%;
+    --input: 186 47% 20%;
+    --ring: 324 61% 65%;
+    
+    --sidebar-background: 222.2 84% 6%;
+    --sidebar-foreground: 42 29% 95%;
+    --sidebar-primary: 324 61% 65%;
+    --sidebar-primary-foreground: 222.2 84% 6%;
+    --sidebar-accent: 186 47% 20%;
+    --sidebar-accent-foreground: 42 29% 95%;
+    --sidebar-border: 186 47% 20%;
+    --sidebar-ring: 324 61% 65%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(324 61% 65%), hsl(324 61% 70%));
+    --gradient-accent: linear-gradient(135deg, hsl(186 47% 25%), hsl(186 47% 30%));
+    --shadow-soft: 0 4px 20px -2px hsl(324 61% 65% / 0.2);
+    --shadow-medium: 0 8px 30px -4px hsl(324 61% 65% / 0.25);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
