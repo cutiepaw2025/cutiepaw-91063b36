@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Download, Upload, FileSpreadsheet, CheckCircle2, XCircle, Save, Loader2, Plus, Edit, Trash2, Eye } from "lucide-react";
 import supabase from "@/lib/supabase/client";
@@ -25,7 +26,11 @@ const TEMPLATE_HEADERS = [
   "mrp",
   "cost price",
   "selling price",
-  "image"
+  "image_url",
+  "image1",
+  "image2",
+  "image3",
+  "image4",
 ] as const;
 
 type ProductCsvRow = Record<(typeof TEMPLATE_HEADERS)[number], string>;
@@ -50,7 +55,11 @@ function downloadCsvTemplate() {
     "999",
     "199",
     "399",
-    "https://example.com/image.jpg"
+    "https://example.com/image-main.jpg",
+    "https://example.com/image-main.jpg",
+    "https://example.com/image-2.jpg",
+    "https://example.com/image-3.jpg",
+    "https://example.com/image-4.jpg",
   ].join(",");
 
   const csv = [headerRow, exampleRow].join("\n");
@@ -102,7 +111,11 @@ function validateRow(row: ProductCsvRow): ParsedRow {
   if (!isNum(row["selling price"])) errors.push("selling price must be a number");
 
   if (num(row["mrp"]) < num(row["selling price"])) errors.push("mrp < selling price");
-  if (row["image"] && !/^https?:\/\//i.test(row["image"])) errors.push("image must be a URL");
+  const imageFields = ["image1","image2","image3","image4"] as const;
+  imageFields.forEach((f) => {
+    if (row[f] && !/^https?:\/\//i.test(row[f])) errors.push(`${f} must be a URL`);
+  });
+  if (row["image_url"] && !/^https?:\/\//i.test(row["image_url"])) errors.push("image_url must be a URL");
 
   return { row, isValid: errors.length === 0, errors };
 }
@@ -117,6 +130,9 @@ export default function ProductMaster() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [bulkImageUploadingIndex, setBulkImageUploadingIndex] = useState<number | null>(null);
+  const [search, setSearch] = useState("");
+  const [brandFilter, setBrandFilter] = useState<string>("all");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
   const validCount = useMemo(() => parsed?.filter(p => p.isValid).length ?? 0, [parsed]);
 
@@ -134,6 +150,12 @@ export default function ProductMaster() {
     const { data } = supabase.storage.from(bucket).getPublicUrl(path);
     return data.publicUrl || null;
   };
+  const resolveAllProductImages = (product: any): string[] => {
+    const urls = [product.image_url, product.image1, product.image2, product.image3, product.image4]
+      .map((u: string | null | undefined) => resolveProductImageUrl(u || null))
+      .filter(Boolean) as string[];
+    return urls;
+  };
 
   // Fetch all products
   const { data: products, isLoading: productsLoading } = useQuery({
@@ -149,9 +171,86 @@ export default function ProductMaster() {
     }
   });
 
+  const brandOptions = useMemo(() => {
+    const set = new Set<string>();
+    (products || []).forEach((p: any) => { if (p.brand) set.add(p.brand); });
+    return Array.from(set).sort();
+  }, [products]);
+
+  const categoryOptions = useMemo(() => {
+    const set = new Set<string>();
+    (products || []).forEach((p: any) => { if (p.category) set.add(p.category); });
+    return Array.from(set).sort();
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return (products || []).filter((p: any) => {
+      if (brandFilter !== "all" && (p.brand || "") !== brandFilter) return false;
+      if (categoryFilter !== "all" && (p.category || "") !== categoryFilter) return false;
+      if (!q) return true;
+      const hay = [
+        p.sku,
+        p.size,
+        p.class_name,
+        p.color,
+        p.brand,
+        p.category,
+        p.hsn,
+        String(p.gst_percent),
+        String(p.mrp),
+        String(p.cost_price),
+        String(p.selling_price)
+      ].map((v: any) => String(v ?? "").toLowerCase());
+      return hay.some((s: string) => s.includes(q));
+    });
+  }, [products, search, brandFilter, categoryFilter]);
+
+  function exportCsv(rows: any[]) {
+    if (!rows || rows.length === 0) {
+      toast.error("No rows to export");
+      return;
+    }
+    const headers = [
+      "sku",
+      "size",
+      "class_name",
+      "color",
+      "brand",
+      "category",
+      "hsn",
+      "gst_percent",
+      "mrp",
+      "cost_price",
+      "selling_price",
+      "image_url",
+      "image1",
+      "image2",
+      "image3",
+      "image4",
+    ];
+    const csv = [
+      headers.join(","),
+      ...rows.map((p: any) => headers.map((h) => {
+        const v = p[h] ?? "";
+        const s = String(v);
+        return s.includes(",") || s.includes("\n") ? `"${s.replace(/"/g, '""')}"` : s;
+      }).join(","))
+    ].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `products_export_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Exported CSV");
+  }
+
   // Save to database mutation (bulk)
   const saveMutation = useMutation({
     mutationFn: async (validRows: ParsedRow[]) => {
+      // Build product rows from parsed CSV
       const products = validRows.map(p => ({
         sku: p.row["sku"],
         size: p.row["size"] || null,
@@ -164,12 +263,23 @@ export default function ProductMaster() {
         mrp: p.row["mrp"] ? parseFloat(p.row["mrp"]) : 0,
         cost_price: p.row["cost price"] ? parseFloat(p.row["cost price"]) : 0,
         selling_price: p.row["selling price"] ? parseFloat(p.row["selling price"]) : 0,
-        image_url: p.row["image"] || null,
+        image_url: p.row["image_url"] || null,
+        image1: p.row["image1"] || null,
+        image2: p.row["image2"] || null,
+        image3: p.row["image3"] || null,
+        image4: p.row["image4"] || null,
       }));
+      // De-duplicate by SKU (last occurrence wins) before upsert
+      const bySku = new Map<string, any>();
+      for (const prod of products) {
+        if (!prod.sku) continue;
+        bySku.set(prod.sku, prod);
+      }
+      const upsertRows = Array.from(bySku.values());
 
       const { error } = await supabase
         .from('product_master')
-        .upsert(products, { onConflict: 'sku' });
+        .upsert(upsertRows, { onConflict: 'sku' });
 
       if (error) throw error;
     },
@@ -390,34 +500,11 @@ export default function ProductMaster() {
                           <TableRow key={idx} className={p.isValid ? "bg-emerald-50" : "bg-red-50"}>
                             {TEMPLATE_HEADERS.map(h => (
                               <TableCell key={h}>
-                                {h === "image" ? (
+                                {h.startsWith("image") ? (
                                   p.row[h] ? (
                                     <img src={resolveProductImageUrl(p.row[h]) || p.row[h]} alt="preview" className="h-10 w-10 object-cover rounded border" />
                                   ) : (
-                                    <div className="flex items-center gap-2">
-                                      <Button
-                                        type="button"
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() => {
-                                          const input = document.createElement('input');
-                                          input.type = 'file';
-                                          input.accept = 'image/*';
-                                          input.onchange = (e) => {
-                                            const f = (e.target as HTMLInputElement).files?.[0];
-                                            if (f) handleBulkRowImageUpload(idx, f);
-                                          };
-                                          input.click();
-                                        }}
-                                        disabled={bulkImageUploadingIndex === idx}
-                                      >
-                                        {bulkImageUploadingIndex === idx ? (
-                                          <Loader2 className="h-4 w-4 animate-spin" />
-                                        ) : (
-                                          <Upload className="h-4 w-4" />
-                                        )}
-                                      </Button>
-                                    </div>
+                                    <span className="text-muted-foreground">—</span>
                                   )
                                 ) : (
                                   p.row[h]
@@ -436,7 +523,7 @@ export default function ProductMaster() {
                   <p className="text-xs text-muted-foreground">Showing first 5 rows for preview. Full file will be processed on import.</p>
                   
                   {/* Save Button */}
-                  <div className="flex justify-end pt-4">
+                      <div className="flex justify-end pt-4">
                     <Button 
                       onClick={() => {
                         const validRows = parsed.filter(p => p.isValid);
@@ -454,7 +541,7 @@ export default function ProductMaster() {
                       ) : (
                         <Save className="h-4 w-4" />
                       )}
-                      Save {validCount} Valid Products to Database
+                          Save {validCount} Valid Products to Database
                     </Button>
                   </div>
                 </div>
@@ -469,11 +556,44 @@ export default function ProductMaster() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileSpreadsheet className="h-5 w-5" />
-            All Products ({products?.length || 0})
+            All Products ({filteredProducts?.length || 0}/{products?.length || 0})
           </CardTitle>
           <CardDescription>View and manage all uploaded products</CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex w-full max-w-xl items-center gap-2">
+              <Input
+                placeholder="Search products..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <Select value={brandFilter} onValueChange={setBrandFilter}>
+                <SelectTrigger className="min-w-[160px]"><SelectValue placeholder="Brand" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Brands</SelectItem>
+                  {brandOptions.map((b) => (
+                    <SelectItem key={b} value={b}>{b}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="min-w-[180px]"><SelectValue placeholder="Category" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categoryOptions.map((c) => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={() => { setSearch(""); setBrandFilter("all"); setCategoryFilter("all"); }}>Reset</Button>
+              <Button onClick={() => exportCsv(filteredProducts)} className="flex items-center gap-2">
+                <Download className="h-4 w-4" /> Export CSV
+              </Button>
+            </div>
+          </div>
           {productsLoading ? (
             <div className="space-y-2">
               <Skeleton className="h-4 w-full" />
@@ -501,13 +621,13 @@ export default function ProductMaster() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {products.map((product) => (
+                  {(filteredProducts || []).map((product) => (
                     <TableRow key={product.id}>
                       <TableCell>
-                        {product.image_url ? (
-                          <img 
-                            src={resolveProductImageUrl(product.image_url) || product.image_url}
-                            alt={product.sku} 
+                        {resolveProductImageUrl(product.image_url) ? (
+                          <img
+                            src={resolveProductImageUrl(product.image_url) as string}
+                            alt={product.sku}
                             className="h-12 w-12 object-cover rounded border"
                           />
                         ) : (
@@ -535,6 +655,33 @@ export default function ProductMaster() {
                           <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate(product.id)}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
+                          {/* View gallery quick dialog */}
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl">
+                              <DialogHeader>
+                                <DialogTitle>Images - {product.sku}</DialogTitle>
+                              </DialogHeader>
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                {['image1','image2','image3','image4'].map((key) => {
+                                  const url = resolveProductImageUrl((product as any)[key]);
+                                  return (
+                                    <div key={key} className="border rounded p-2 flex items-center justify-center bg-background">
+                                      {url ? (
+                                        <img src={url} className="h-24 w-24 object-cover rounded" />
+                                      ) : (
+                                        <div className="h-24 w-24 bg-muted rounded border flex items-center justify-center text-xs text-muted-foreground">{key}</div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -641,6 +788,31 @@ export default function ProductMaster() {
                     />
                   </div>
                 )}
+              </div>
+              <div>
+                <Label>Secondary Images</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-1">
+                  {(['image1','image2','image3','image4'] as const).map((key) => (
+                    <div key={key} className="space-y-1">
+                      <Input
+                        placeholder={key}
+                        value={editForm[key] || ''}
+                        onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })}
+                      />
+                      <div className="flex items-center justify-center">
+                        {editForm[key] ? (
+                          <img
+                            src={resolveProductImageUrl(editForm[key]) || editForm[key]}
+                            alt={key}
+                            className="h-16 w-16 object-cover rounded border"
+                          />
+                        ) : (
+                          <div className="h-16 w-16 bg-muted rounded border flex items-center justify-center text-[10px] text-muted-foreground">{key}</div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>

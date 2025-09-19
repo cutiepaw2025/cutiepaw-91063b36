@@ -34,7 +34,7 @@ type Lead = {
 };
 
 const COLUMNS = [
-  { id: "leads", title: "Leads", bg: "bg-green-50", border: "border-green-200" },
+  { id: "leads", title: "Leads Board", bg: "bg-green-50", border: "border-green-200" },
   { id: "negotiation", title: "Negotiation", bg: "bg-yellow-50", border: "border-yellow-200" },
   { id: "lost", title: "Lost", bg: "bg-rose-50", border: "border-rose-200" },
   { id: "sales", title: "Sales", bg: "bg-sky-50", border: "border-sky-200" },
@@ -244,6 +244,16 @@ export default function LeadsBoard() {
       return;
     }
     moveMutation.mutate({ id: movingToLost.id, status: "lost", lost_reason: lostReason });
+  };
+
+  const changeStatus = (lead: Lead, nextStatus: string) => {
+    if (!lead || !nextStatus || nextStatus === (lead.status || "leads")) return;
+    if (nextStatus === "lost") {
+      setMovingToLost({ id: lead.id, name: lead.customer_name });
+      setOpenLostReason(true);
+      return;
+    }
+    moveMutation.mutate({ id: lead.id, status: nextStatus });
   };
 
   const toggleFieldVisibility = (fieldKey: string) => {
@@ -499,6 +509,22 @@ export default function LeadsBoard() {
                             <X className="h-3 w-3" /> Lost: {(lead as any).lost_reason}
                           </div>
                         )}
+                      </div>
+                      <div className="mt-2 md:hidden">
+                        <Label className="text-xs mb-1 block">Status</Label>
+                        <Select
+                          value={(lead.status as string) || "leads"}
+                          onValueChange={(value) => changeStatus(lead, value)}
+                        >
+                          <SelectTrigger className="h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {COLUMNS.map((c) => (
+                              <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </CardContent>
                   </Card>
